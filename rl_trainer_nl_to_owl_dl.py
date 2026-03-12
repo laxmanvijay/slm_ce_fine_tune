@@ -1,13 +1,3 @@
-"""
-GRPO trainer for NL explanation → OWL-DL expression.
-
-Reward suite (all return list[float] over a batch):
-  1. owl_dl_syntax_reward           – formal verification via owlapy eval()
-  2. owl_dl_ontology_conformance_reward – IRI namespace+name against known ontology
-  3. owl_dl_constructor_similarity_reward – soft match on OWL constructor usage
-  4. owl_dl_format_reward           – no prose / markdown / thinking tokens
-"""
-
 import re
 import gc
 import ast
@@ -23,7 +13,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
 from peft import PeftModel
 
-# owlapy imports used inside eval() for syntax checking
+
 from owlapy.class_expression import (
     OWLClass, OWLObjectIntersectionOf, OWLObjectUnionOf,
     OWLObjectComplementOf, OWLObjectSomeValuesFrom, OWLObjectAllValuesFrom,
@@ -34,13 +24,7 @@ from owlapy.owl_property import OWLObjectProperty
 from owlapy.iri import IRI
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 class MetricsCallback(TrainerCallback):
-    """Collects all logged metrics at every logging step."""
-
     def __init__(self):
         self.metrics_history: list[dict] = []
 
@@ -54,7 +38,7 @@ class MetricsCallback(TrainerCallback):
             self.metrics_history.append(entry)
 
 
-# IRI-prefix → dataset name mapping
+
 IRI_PREFIX_TO_DATASET = {
     "http://www.aifb.uni-karlsruhe.de/": "aifb",
     "http://data.bgs.ac.uk/":            "bgs",
@@ -78,9 +62,6 @@ def build_prompt(explanation: str, template: str) -> str:
     return header + explanation + '"\n\n**DL Expression**:\n'
 
 
-# ---------------------------------------------------------------------------
-# Build valid-IRI sets from existing OWL-DL files (ground-truth examples)
-# ---------------------------------------------------------------------------
 IRI_PATTERN = re.compile(r"IRI\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)")
 
 
@@ -97,15 +78,12 @@ _owl_dl_all: dict[str, str] = {}
 _valid_iris_by_dataset: dict[str, set[tuple[str, str]]] = {}
 
 for _ds in ("aifb", "bgs", "mutag"):
-    with open(f"./experiments/distillation/owl_dl_{_ds}.json") as f:
+    with open(f"./distillation/owl_dl_{_ds}.json") as f:
         _ds_dict: dict[str, str] = json.load(f)
     _owl_dl_all.update(_ds_dict)
     _valid_iris_by_dataset[_ds] = extract_valid_iris(_ds_dict)
 
 
-# ---------------------------------------------------------------------------
-# OWLAPY eval namespace
-# ---------------------------------------------------------------------------
 _EVAL_GLOBALS = {
     "OWLClass": OWLClass,
     "OWLObjectIntersectionOf": OWLObjectIntersectionOf,
@@ -121,7 +99,7 @@ _EVAL_GLOBALS = {
     "OWLNothing": OWLNothing,
 }
 
-# All OWL constructors we track for structural similarity
+
 _ALL_CONSTRUCTORS = [
     "OWLObjectSomeValuesFrom", "OWLObjectAllValuesFrom",
     "OWLObjectIntersectionOf", "OWLObjectUnionOf",
@@ -132,8 +110,6 @@ _ALL_CONSTRUCTORS = [
 
 
 def _clean_completion(completion: str) -> str:
-    """Strip markdown code fences and leading/trailing whitespace."""
-    # Remove ```python ... ``` or ``` ... ``` blocks
     completion = re.sub(r"```(?:python)?\s*", "", completion)
     completion = re.sub(r"```", "", completion)
     return completion.strip()
@@ -143,13 +119,8 @@ def _count_constructors(text: str) -> Counter:
     return Counter(c for c in _ALL_CONSTRUCTORS if c in text)
 
 
-# ---------------------------------------------------------------------------
-# Reward 1: OWL-DL Syntax (formal verification via owlapy eval)
-# ---------------------------------------------------------------------------
 def owl_dl_syntax_reward(prompts, completions, **kwargs) -> list[float]:
     """
-    Tries to eval() each completion as a Python owlapy expression.
-
     Score:
       Valid OWLClassExpression  →  1.0
       Parses but wrong type     →  0.0
@@ -159,7 +130,7 @@ def owl_dl_syntax_reward(prompts, completions, **kwargs) -> list[float]:
     scores = []
     for completion in completions:
         cleaned = _clean_completion(completion)
-        # Reject if there is prose text mixed in — look for at least one OWL constructor
+
         if not any(c in cleaned for c in _ALL_CONSTRUCTORS):
             scores.append(-1.0)
             continue
@@ -176,14 +147,8 @@ def owl_dl_syntax_reward(prompts, completions, **kwargs) -> list[float]:
     return scores
 
 
-# ---------------------------------------------------------------------------
-# Reward 2: Ontology Conformance
-# ---------------------------------------------------------------------------
 def owl_dl_ontology_conformance_reward(prompts, completions, owl_dl_target, **kwargs) -> list[float]:
     """
-    Extracts every IRI('namespace', 'name') pair from the completion and
-    checks it against the valid IRI set for the relevant dataset.
-
     Score  =  valid_count / (valid_count + invalid_count)   [0..1]
              − 0.5 * (invalid_count / total)                 [penalty]
 
@@ -192,8 +157,6 @@ def owl_dl_ontology_conformance_reward(prompts, completions, owl_dl_target, **kw
     """
     scores = []
     for completion, gt_expr in zip(completions, owl_dl_target):
-        # Determine the dataset from the ground-truth IRI appearances
-        # (we identify the dataset by checking which valid-IRI set overlaps most)
         best_ds = None
         best_overlap = -1
         gt_iris = set(IRI_PATTERN.findall(gt_expr))
@@ -218,17 +181,8 @@ def owl_dl_ontology_conformance_reward(prompts, completions, owl_dl_target, **kw
         scores.append(round(score, 4))
     return scores
 
-
-# ---------------------------------------------------------------------------
-# Reward 3: Constructor Similarity (soft structural match vs ground truth)
-# ---------------------------------------------------------------------------
 def owl_dl_constructor_similarity_reward(prompts, completions, owl_dl_target, **kwargs) -> list[float]:
     """
-    Compares the multiset of OWL constructors used in the completion against
-    the ground truth.  This encourages the model to pick the right constructor
-    types (MinCardinality vs AllValuesFrom, IntersectionOf vs UnionOf, etc.)
-    without needing exact string equality.
-
     Score = intersection size / union size  (Jaccard on constructor multisets)
     Range: [0, 1]
     """
@@ -243,10 +197,6 @@ def owl_dl_constructor_similarity_reward(prompts, completions, owl_dl_target, **
         scores.append(intersection / union if union > 0 else 0.0)
     return scores
 
-
-# ---------------------------------------------------------------------------
-# Reward 4: Format Purity
-# ---------------------------------------------------------------------------
 def owl_dl_format_reward(prompts, completions, **kwargs) -> list[float]:
     """
     Penalises anything that is not clean OWL-DL output:
@@ -281,15 +231,12 @@ def owl_dl_format_reward(prompts, completions, **kwargs) -> list[float]:
     return scores
 
 
-# ---------------------------------------------------------------------------
-# Dataset
-# ---------------------------------------------------------------------------
 nlef_prompts: dict[str, str] = {}
 for ds_name in ("aifb", "bgs", "mutag"):
-    with open(f"./experiments/distillation/nlef_prompt_{ds_name}.txt", "r", encoding="utf-8") as f:
+    with open(f"./distillation/nlef_prompt_{ds_name}.txt", "r", encoding="utf-8") as f:
         nlef_prompts[ds_name] = f.read()
 
-with open("./experiments/distillation/explanations.json", "r") as f:
+with open("./distillation/explanations.json", "r") as f:
     explanations: dict[str, str] = json.load(f)
 
 grpo_data: list[dict] = []
@@ -308,9 +255,6 @@ for iri, owl_dl_expr in _owl_dl_all.items():
 print(f"GRPO dataset size: {len(grpo_data)} samples")
 grpo_dataset = Dataset.from_list(grpo_data)
 
-# ---------------------------------------------------------------------------
-# Model configs (Qwen3 family only)
-# ---------------------------------------------------------------------------
 experiment_models = [
     "Qwen/Qwen3-8B",
     # "Qwen/Qwen3-4B",
@@ -325,14 +269,11 @@ experiment_quantization_config = {
     "Qwen/Qwen3-0.6B": None,
 }
 
-# ---------------------------------------------------------------------------
-# Training loop
-# ---------------------------------------------------------------------------
 for model_name in experiment_models:
     short_name = model_name.split("/")[-1]
     SFT_WEIGHTS_DIR = f"./weights/sft_lora_weights_nl_to_owl_dl_{short_name}"
     RL_OUTPUT_DIR   = f"./weights/rl_lora_weights_nl_to_owl_dl_{short_name}"
-    METRICS_FILE    = pathlib.Path(f"rl_nl_to_owl_dl_run_metrics_{short_name}.json")
+    METRICS_FILE    = pathlib.Path(f"rl_nl_to_owl_dl_run_metrics_{short_name}_2.json")
 
     inf_tokenizer = AutoTokenizer.from_pretrained(SFT_WEIGHTS_DIR)
     inf_base_model = AutoModelForCausalLM.from_pretrained(
@@ -358,7 +299,7 @@ for model_name in experiment_models:
         reward_weights=[0.40, 0.30, 0.20, 0.10],
 
         bf16=True,
-        output_dir=f"./grpo_nl_to_owl_dl_output_{short_name}",
+        output_dir=f"./checkpoints/grpo_nl_to_owl_dl_output_{short_name}",
         report_to="none",
         save_steps=100,
         save_total_limit=2,

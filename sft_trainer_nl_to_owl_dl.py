@@ -13,8 +13,6 @@ from transformers import TrainerCallback, TrainerControl, TrainerState, Training
 
 
 class LossCallback(TrainerCallback):
-    """Collects training loss at every logging step for later plotting."""
-
     def __init__(self):
         self.loss_history: list[dict] = []
 
@@ -28,9 +26,6 @@ class LossCallback(TrainerCallback):
             })
 
 
-# ---------------------------------------------------------------------------
-# IRI-prefix → dataset name mapping
-# ---------------------------------------------------------------------------
 IRI_PREFIX_TO_DATASET = {
     "http://www.aifb.uni-karlsruhe.de/": "aifb",
     "http://data.bgs.ac.uk/":            "bgs",
@@ -47,13 +42,6 @@ def get_dataset_name(iri: str) -> str | None:
 
 
 def build_prompt(explanation: str, template: str) -> str:
-    """Insert the NL explanation into the NLEF prompt template.
-
-    The template ends with a placeholder sentence between quotes after
-    ``**Sentence(s)**: "``.  We replace that sentence with the actual
-    explanation and close with the ``**DL Expression**:`` marker so the
-    model learns to generate the OWL-DL string that follows.
-    """
     marker = '**Sentence(s)**: "'
     idx = template.rfind(marker)
     if idx == -1:
@@ -62,33 +50,19 @@ def build_prompt(explanation: str, template: str) -> str:
     return header + explanation + '"\n\n**DL Expression**:\n'
 
 
-# ---------------------------------------------------------------------------
-# 1. Load NLEF prompt templates (one per dataset)
-# ---------------------------------------------------------------------------
 nlef_prompts: dict[str, str] = {}
 for ds_name in ("aifb", "bgs", "mutag"):
     with open(f"nlef_prompt_{ds_name}.txt", "r", encoding="utf-8") as f:
         nlef_prompts[ds_name] = f.read()
 
-# ---------------------------------------------------------------------------
-# 2. Load NL explanations  (IRI → natural-language explanation)
-# ---------------------------------------------------------------------------
 with open("explanations.json", "r") as f:
     explanations: dict[str, str] = json.load(f)
 
-# ---------------------------------------------------------------------------
-# 3. Load OWL-DL targets (merge all three dataset files)
-# ---------------------------------------------------------------------------
 owl_dl: dict[str, str] = {}
 for ds_name in ("aifb", "bgs", "mutag"):
     with open(f"owl_dl_{ds_name}.json", "r") as f:
         owl_dl.update(json.load(f))
 
-# ---------------------------------------------------------------------------
-# 4. Build SFT dataset:  explanation  →  OWL-DL expression
-#    - user   : NLEF prompt template (with ontology context) + NL explanation
-#    - assistant : OWL-DL expression
-# ---------------------------------------------------------------------------
 sft_data: list[dict] = []
 for iri, owl_dl_expr in owl_dl.items():
     if iri not in explanations:
@@ -107,9 +81,6 @@ for iri, owl_dl_expr in owl_dl.items():
 print(f"SFT dataset size: {len(sft_data)} samples")
 dataset = Dataset.from_list(sft_data)
 
-# ---------------------------------------------------------------------------
-# 5. Model / LoRA configurations  (Qwen3 family only)
-# ---------------------------------------------------------------------------
 experiment_model_configs = [
     {
         "model_name": "Qwen/Qwen3-8B",
@@ -166,9 +137,6 @@ experiment_quantization_config = {
     "HuggingFaceTB/SmolLM-135M": None,
 }
 
-# ---------------------------------------------------------------------------
-# 6. Training loop
-# ---------------------------------------------------------------------------
 WEIGHTS_DIR = pathlib.Path("weights")
 run_metrics: list[dict] = []
 
