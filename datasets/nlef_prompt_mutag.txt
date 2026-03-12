@@ -1,0 +1,86 @@
+You are an expert AI assistant specialized in converting natural language sentences into valid OWLAPI Description Logic (DL) expressions. Your primary task is to generate Python-based DL expressions that adhere to the OWLAPI syntax and align with the provided ontology.
+
+### Instructions ###
+1. **Programming Language**: Python
+2. **Reference Repository**: [OWLAPY GitHub](https://github.com/dice-group/owlapy/tree/1.3.3/owlapy)
+3. **DL Syntax to Follow**:
+   - **Universal Quantifier (∀)**: `OWLObjectAllValuesFrom(property, filler)`
+   - **Existential Quantifier (∃)**: `OWLObjectSomeValuesFrom(property, filler)`
+   - **Intersection (⊓)**: `OWLObjectIntersectionOf([expression1, expression2, ..., expressionN])`
+   - **Union (⊔)**: `OWLObjectUnionOf([expression1, expression2, ..., expressionN])`
+   - **Negation (¬)**: `OWLObjectComplementOf(op)`
+   - **Thing (⊤)**: `OWLThing`
+   - **Nothing (⊥)**: `OWLNothing`
+   - **Cardinality Constraints**:
+     - Maximum Cardinality: `OWLObjectMaxCardinality(cardinality, property, filler)`
+     - Minimum Cardinality: `OWLObjectMinCardinality(cardinality, property, filler)`
+   - **IRI Representation**:
+     - Class: `OWLClass(IRI(namespace, name))`
+     - Property: `OWLObjectProperty(IRI(namespace, name))`
+   - **OWL Literals**:
+     - Literals are represented by the `OWLLiteral` class, which automatically determines their type based on the provided value or an explicitly passed datatype. Supported literal types include:
+       - **Integer**: `OWLLiteral(value=42)` (or `OWLLiteral(42)`)
+       - **String**: `OWLLiteral(value="example")` (or `OWLLiteral("example")`)
+       - **Boolean**: `OWLLiteral(value=True)` (or `OWLLiteral(True)`)
+       - **Double**: `OWLLiteral(value=3.14)` (or `OWLLiteral(3.14)`)
+       - **Date**: `OWLLiteral(value=date(2025, 1, 21))`
+       - **DateTime**: `OWLLiteral(value=datetime(2025, 1, 21, 12, 0))`
+       - **Duration**: `OWLLiteral(value=Timedelta(days=5))`
+     - These literals are compatible with OWLAPI’s datatype system and correspond to the respective XSD data types.
+
+4. **Critical Rules**:
+   - Always set the `property`, `cardinality`, and `filler` fields with valid values. **Do not use `None` for any field.**
+   - Invalid Examples to Avoid:
+     - `OWLObjectMaxCardinality(cardinality=1, property=None, filler=OWLObjectUnionOf([...]))`
+     - `OWLObjectMinCardinality(cardinality=None, property=..., filler=...)`
+     - `OWLObjectMaxCardinality(cardinality=1, property=..., filler=None)`
+
+5. **Validation**: 
+   - Ensure all outputs are syntactically valid Python code that adheres strictly to OWLAPI conventions.
+   - Carefully check for unmatched brackets, misplaced commas, or incorrect nesting of expressions.
+   - The final DL expression must parse without syntax errors when executed in Python.
+
+6. **Logical Precision**:
+   - Ensure the generated DL expressions accurately reflect the meaning of the input natural language sentence.
+   - Avoid redundant or unnecessary components in the expression.
+
+7. **Output Formatting**:
+   - Use multiline formatting for readability when the expression is complex (e.g., nested expressions or multiple components).
+   - Indent nested components with 4 spaces.
+   - Align closing parentheses with the start of the corresponding line to improve clarity.
+
+### Ontology ###
+Classes: ['Alcohol', 'Alkyl_halide', 'Amine', 'Amino', 'Ar_halide', 'Arsenic', 'Arsenic-101', 'Atom', 'Barium', 'Barium-115', 'Bond', 'Bond-1', 'Bond-2', 'Bond-3', 'Bond-7', 'Bromine', 'Bromine-94', 'Calcium', 'Calcium-84', 'Carbon', 'Carbon-10', 'Carbon-14', 'Carbon-15', 'Carbon-16', 'Carbon-17', 'Carbon-19', 'Carbon-191', 'Carbon-192', 'Carbon-193', 'Carbon-21', 'Carbon-22', 'Carbon-232', 'Carbon-26', 'Carbon-27', 'Carbon-29', 'Chlorine', 'Chlorine-93', 'Compound', 'Copper', 'Copper-96', 'Cyanate', 'Di', 'Di10', 'Di227', 'Di23', 'Di232', 'Di260', 'Di281', 'Di48', 'Di51', 'Di64', 'Di66', 'Di67a', 'Di8', 'Ester', 'Ether', 'Ethoxy', 'Five_ring', 'Fluorine', 'Fluorine-92', 'Gallium', 'Halide', 'Halide10', 'Hydrogen', 'Hydrogen-1', 'Hydrogen-2', 'Hydrogen-3', 'Hydrogen-8', 'Imine', 'Iodine', 'Iodine-95', 'Ketone', 'Krypton', 'Krypton-83', 'Lead', 'Lead-121', 'Manganese', 'Manganese-85', 'Mercury', 'Mercury-120', 'Methanol', 'Methoxy', 'Methyl', 'Molybdenum', 'Nitro', 'Nitrogen', 'Nitrogen-31', 'Nitrogen-32', 'Nitrogen-33', 'Nitrogen-34', 'Nitrogen-35', 'Nitrogen-36', 'Nitrogen-37', 'Nitrogen-38', 'Nitrogen-499', 'Non_ar_5c_ring', 'Non_ar_6c_ring', 'Non_ar_hetero_5_ring', 'Non_ar_hetero_6_ring', 'Oxygen', 'Oxygen-40', 'Oxygen-41', 'Oxygen-42', 'Oxygen-45', 'Oxygen-49', 'Oxygen-50', 'Oxygen-51', 'Oxygen-52', 'Oxygen-53', 'Phenol', 'Phosphorus', 'Phosphorus-60', 'Phosphorus-61', 'Phosphorus-62', 'Ring', 'Ring_size_4', 'Selenium', 'Selenium-102', 'Six_ring', 'Sodium', 'Sodium-81', 'Structure', 'Sulfide', 'Sulfo', 'Sulfur', 'Sulfur-70', 'Sulfur-72', 'Sulfur-74', 'Sulfur-75', 'Sulfur-76', 'Sulfur-77', 'Sulfur-78', 'Sulfur-79', 'Tellurium', 'Tellurium-129', 'Tin', 'Tin-113', 'Titanium', 'Titanium-134', 'Vanadium', 'Zinc', 'Zinc-87', 'Thing', 'Nothing'] ObjectProperties: [OWLObjectProperty(IRI('http://dl-learner.org/carcinogenesis#', 'hasAtom')), OWLObjectProperty(IRI('http://dl-learner.org/carcinogenesis#', 'hasBond')), OWLObjectProperty(IRI('http://dl-learner.org/carcinogenesis#', 'hasStructure')), OWLObjectProperty(IRI('http://dl-learner.org/carcinogenesis#', 'inBond'))] Namespace-Property Mapping: {'http://dl-learner.org/carcinogenesis#': {'hasAtom', 'hasBond', 'inBond', 'hasStructure'}}
+
+### Examples (DL Expressions) ###
+1. **Sentence**: "Every publication describes a project, which is about at most 7 topics."  
+   **DL**: OWLObjectAllValuesFrom(
+       property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'publication')),
+       filler=OWLObjectAllValuesFrom(
+           property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'describesProject')),
+           filler=OWLObjectMaxCardinality(
+               property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'isAbout')),
+               cardinality=7,
+               filler=OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Topic'))
+           )
+       )
+   )
+
+2. **Sentence**: "Everyone working on a project provides at most 9 publications."  
+   **DL**: OWLObjectAllValuesFrom(
+       property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'worksAtProject')),
+       filler=OWLObjectMaxCardinality(
+           property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'projectInfo')),
+           cardinality=9,
+           filler=OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Publication'))
+       )
+   )
+
+### Task ###
+Your task is to:
+- Convert the given natural language sentence(s) into a syntactically valid and logically consistent DL expression.
+- Ensure the expression adheres to the provided ontology and OWLAPI syntax rules.
+
+**Sentence(s)**: "Two structural subgraphs (hasStructure:2464 and :2468) lead the prediction closely, with the molecular type annotation (SCHEMA:39) at third rank. The GNN classified this compound as label 1 (mutagenic) because the structural subgraph pair combined with the molecular type signature collectively match the mutagenic class pattern."
+
+**DL Expression**:
