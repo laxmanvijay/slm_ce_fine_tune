@@ -63,16 +63,16 @@ experiment_quantization_config = {
     "Qwen/Qwen3-8B": BitsAndBytesConfig(
         load_in_8bit=True,
     ),
-    "Qwen/Qwen3-4B": BitsAndBytesConfig(
-        load_in_8bit=True,
-    ),
-    "Qwen/Qwen3-1.7B": None,
-    "Qwen/Qwen3-0.6B": None,
+    # "Qwen/Qwen3-4B": BitsAndBytesConfig(
+    #     load_in_8bit=True,
+    # ),
+    # "Qwen/Qwen3-1.7B": None,
+    # "Qwen/Qwen3-0.6B": None,
 }
 
 for model_name in experiment_models:
     short_name = model_name.split("/")[-1]
-    weights_dir = f"./weights/sft_lora_weights_nl_to_owl_dl_{short_name}"
+    weights_dir = f"./weights/rl_lora_weights_nl_to_owl_dl_{short_name}"
     print(f"Loading base model {model_name} with quantization config: {experiment_quantization_config.get(model_name)}")
     inf_model = AutoModelForCausalLM.from_pretrained(
         model_name,

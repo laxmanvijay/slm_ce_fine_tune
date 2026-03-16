@@ -1,0 +1,211 @@
+=== Test Case 1 (aifb: http://www.aifb.uni-karlsruhe.de/Personen/viewPersonOWL/id12instance) ===
+NL Explanation:
+The GNN classified this entity as label 1 primarily based on its personal contact attributes (phone, homepage, photo, fax), which are characteristic of researchers in this group. Its connections to research area Forschungsgebiete:145 via isWorkedOnBy and publications through Forschungsgruppen:0 further reinforce this group membership.
+Ground-truth OWL-DL:
+OWLObjectIntersectionOf([
+    OWLObjectSomeValuesFrom(
+        property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'isWorkedOnBy')),
+        filler=OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'ResearchTopic'))
+    ),
+    OWLObjectSomeValuesFrom(
+        property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'publishes')),
+        filler=OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'ResearchGroup'))
+    )
+])
+Generated OWL-DL:
+```python
+OWLObjectIntersectionOf([
+    OWLObjectComplementOf(
+        OWLObjectSomeValuesFrom(
+            property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'employs')),
+            filler=OWLObjectUnionOf([
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Employee')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Person'))
+            ])
+        )
+    ),
+    OWLObjectAllValuesFrom(
+        property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'hasParts')),
+        filler=OWLObjectUnionOf([
+            OWLObjectAllValuesFrom(
+                property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'personalContact')),
+                filler=OWLObjectUnionOf([
+                    OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Phone')),
+                    OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Homepage')),
+                    OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Photo')),
+                    OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Fax'))
+                ])
+            ),
+            OWLObjectAllValuesFrom(
+                property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'isWorkedOnBy')),
+                filler=OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Forschungsgebiete:145'))
+            ),
+            OWLObjectAllValuesFrom(
+                property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'publication')),
+                filler=OWLObjectUnionOf([
+                    OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Publication')),
+                    OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Forschungsgruppen:0'))
+                ])
+            )
+        ])
+    )
+])
+```
+
+=== Test Case 2 (aifb: http://www.aifb.uni-karlsruhe.de/Personen/viewPersonOWL/id20instance) ===
+NL Explanation:
+This entity is dominated by a strong publishes relationship to Forschungsgruppen:2 and dense isAbout links to numerous publications (Publikationen:715, 963, 294, etc.), which are the defining signals for label 0. The GNN learned that heavy research-group publishing activity through group 2 is characteristic of this class.
+Ground-truth OWL-DL:
+OWLObjectIntersectionOf([
+    OWLObjectMinCardinality(
+        cardinality=3,
+        property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'publishes')),
+        filler=OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'ResearchGroup'))
+    ),
+    OWLObjectMinCardinality(
+        cardinality=3,
+        property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'isAbout')),
+        filler=OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Publication'))
+    )
+])
+Generated OWL-DL:
+OWLObjectIntersectionOf([
+    OWLObjectAllValuesFrom(
+        property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'publishes')),
+        filler=OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Forschungsgruppen:2'))
+    ),
+    OWLObjectMaxCardinality(
+        property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'isAbout')),
+        cardinality=7,
+        filler=OWLObjectUnionOf([
+            OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Publikationen:715')),
+            OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Publikationen:963')),
+            OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Publikationen:294'))
+        ])
+    ),
+    OWLObjectComplementOf(
+        OWLObjectMinCardinality(
+            property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'isAbout')),
+            cardinality=1,
+            filler=OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Publication'))
+        )
+    )
+])
+
+=== Test Case 1 (aifb: http://www.aifb.uni-karlsruhe.de/Personen/viewPersonOWL/id12instance) ===
+NL Explanation:
+The GNN classified this entity as label 1 primarily based on its personal contact attributes (phone, homepage, photo, fax), which are characteristic of researchers in this group. Its connections to research area Forschungsgebiete:145 via isWorkedOnBy and publications through Forschungsgruppen:0 further reinforce this group membership.
+Ground-truth OWL-DL:
+OWLObjectIntersectionOf([
+    OWLObjectSomeValuesFrom(
+        property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'isWorkedOnBy')),
+        filler=OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'ResearchTopic'))
+    ),
+    OWLObjectSomeValuesFrom(
+        property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'publishes')),
+        filler=OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'ResearchGroup'))
+    )
+])
+Generated OWL-DL:
+DL Expression:
+```python
+OWLObjectIntersectionOf([
+    OWLObjectComplementOf(
+        OWLObjectSomeValuesFrom(
+            property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'employs')),
+            filler=OWLObjectUnionOf([
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Employee')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Student')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'PhDStudent')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Undergraduate')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Graduate')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'PhDThesis')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'MasterThesis')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Thesis')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Book')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Article')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'InBook')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'InCollection')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'InProceedings')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Conference')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Proceedings')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'TechnicalReport')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Report')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Manual')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Booklet')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Misc')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Publication')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Unpublished')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'SoftwareComponent')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'SoftwareProject')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'DevelopmentProject')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'ResearchProject')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Project')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'ProjectReport')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'ProjectMeeting')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Meeting')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Event')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Workshop')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Exhibition')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Lecture')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'ResearchTopic')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Topic')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Organization')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Institute')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'University')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Department')),
+                OWLClass(IRI('http://swrc.ontoware.org
+
+=== Test Case 2 (aifb: http://www.aifb.uni-karlsruhe.de/Personen/viewPersonOWL/id20instance) ===
+NL Explanation:
+This entity is dominated by a strong publishes relationship to Forschungsgruppen:2 and dense isAbout links to numerous publications (Publikationen:715, 963, 294, etc.), which are the defining signals for label 0. The GNN learned that heavy research-group publishing activity through group 2 is characteristic of this class.
+Ground-truth OWL-DL:
+OWLObjectIntersectionOf([
+    OWLObjectMinCardinality(
+        cardinality=3,
+        property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'publishes')),
+        filler=OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'ResearchGroup'))
+    ),
+    OWLObjectMinCardinality(
+        cardinality=3,
+        property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'isAbout')),
+        filler=OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Publication'))
+    )
+])
+Generated OWL-DL:
+OWLObjectIntersectionOf([
+    OWLObjectComplementOf(
+        OWLObjectSomeValuesFrom(
+            property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'isAbout')),
+            filler=OWLObjectUnionOf([
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Publication')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Publikationen:715')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Publikationen:963')),
+                OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Publikationen:294')),
+            ])
+        )
+    ),
+    OWLObjectAllValuesFrom(
+        property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'publishes')),
+        filler=OWLObjectSomeValuesFrom(
+            property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'organization')),
+            filler=OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Forschungsgruppen:2'))
+        )
+    ),
+    OWLObjectMinCardinality(
+        property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'publishes')),
+        cardinality=1,
+        filler=OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'Forschungsgruppen:2'))
+    )
+])
+
+=== Test Case 3 (aifb: http://www.aifb.uni-karlsruhe.de/Personen/viewPersonOWL/id87instance) ===
+NL Explanation:
+The entity has repeated high-importance publishes edges all pointing to Forschungsgruppen:1, making it one of the most concentrated affiliation signals in the dataset. The GNN assigned label 0 because this dense, repeated publication relationship to a single research group is a strong class indicator.
+Ground-truth OWL-DL:
+OWLObjectMinCardinality(
+    cardinality=3,
+    property=OWLObjectProperty(IRI('http://swrc.ontoware.org/ontology#', 'publishes')),
+    filler=OWLClass(IRI('http://swrc.ontoware.org/ontology#', 'ResearchGroup'))
+)
+Generated OWL-DL:

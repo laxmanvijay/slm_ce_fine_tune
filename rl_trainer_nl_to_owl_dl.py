@@ -1,6 +1,5 @@
 import re
 import gc
-import ast
 import json
 import time
 import pathlib
@@ -116,7 +115,47 @@ def _clean_completion(completion: str) -> str:
 
 
 def _count_constructors(text: str) -> Counter:
-    return Counter(c for c in _ALL_CONSTRUCTORS if c in text)
+    pattern = r"\b(?:%s)\b" % "|".join(map(re.escape, _ALL_CONSTRUCTORS))
+    return Counter(re.findall(pattern, text))
+
+
+def _safe_parse_expression(text: str) -> OWLClassExpression | None:
+    cleaned = _clean_completion(text)
+    if not any(c in cleaned for c in _ALL_CONSTRUCTORS):
+        return None
+    try:
+        result = eval(cleaned, {"__builtins__": {}}, _EVAL_GLOBALS)
+    except Exception:
+        return None
+    return result if isinstance(result, OWLClassExpression) else None
+
+
+def _extract_expression_features(text: str) -> Counter:
+    cleaned = _clean_completion(text)
+    features: Counter[str] = Counter()
+
+    for constructor, count in _count_constructors(cleaned).items():
+        features[f"ctor:{constructor}"] += count
+
+    for namespace, name in IRI_PATTERN.findall(cleaned):
+        features[f"iri:{namespace}{name}"] += 1
+
+    for cardinality in re.findall(r"cardinality\s*=\s*(\d+)", cleaned):
+        features[f"card:{cardinality}"] += 1
+
+    for namespace, name in re.findall(
+        r"property\s*=\s*OWLObjectProperty\(\s*IRI\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)\s*\)",
+        cleaned,
+    ):
+        features[f"prop:{namespace}{name}"] += 1
+
+    for namespace, name in re.findall(
+        r"filler\s*=\s*OWLClass\(\s*IRI\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)\s*\)",
+        cleaned,
+    ):
+        features[f"filler:{namespace}{name}"] += 1
+
+    return features
 
 
 def owl_dl_syntax_reward(prompts, completions, **kwargs) -> list[float]:
@@ -181,18 +220,39 @@ def owl_dl_ontology_conformance_reward(prompts, completions, owl_dl_target, **kw
         scores.append(round(score, 4))
     return scores
 
-def owl_dl_constructor_similarity_reward(prompts, completions, owl_dl_target, **kwargs) -> list[float]:
+
+def owl_dl_exact_match_reward(prompts, completions, owl_dl_target, **kwargs) -> list[float]:
     """
-    Score = intersection size / union size  (Jaccard on constructor multisets)
+    Strong reward for exact structural equality after parsing.
+    """
+    scores = []
+    for completion, gt_expr in zip(completions, owl_dl_target):
+        gen_expr = _safe_parse_expression(completion)
+        gt_parsed = _safe_parse_expression(gt_expr)
+        if gen_expr is None or gt_parsed is None:
+            scores.append(0.0)
+            continue
+        scores.append(1.0 if gen_expr == gt_parsed else 0.0)
+    return scores
+
+
+def owl_dl_target_component_reward(prompts, completions, owl_dl_target, **kwargs) -> list[float]:
+    """
+    Score = intersection size / union size on target-relevant feature multisets:
+      constructors, IRIs, properties, fillers, and cardinalities.
     Range: [0, 1]
     """
     scores = []
     for completion, gt_expr in zip(completions, owl_dl_target):
-        gen_counts = _count_constructors(_clean_completion(completion))
-        gt_counts  = _count_constructors(gt_expr)
+        if _safe_parse_expression(completion) is None:
+            scores.append(-1.0)
+            continue
+
+        gen_counts = _extract_expression_features(completion)
+        gt_counts = _extract_expression_features(gt_expr)
 
         intersection = sum((gen_counts & gt_counts).values())
-        union        = sum((gen_counts | gt_counts).values())
+        union = sum((gen_counts | gt_counts).values())
 
         scores.append(intersection / union if union > 0 else 0.0)
     return scores
@@ -295,8 +355,8 @@ for model_name in experiment_models:
         gradient_accumulation_steps=8,
         max_completion_length=512,
 
-        # [syntax, ontology_conformance, constructor_similarity, format]
-        reward_weights=[0.40, 0.30, 0.20, 0.10],
+        # [syntax, exact_match, target_component, format]
+        reward_weights=[0.15, 0.55, 0.25, 0.05],
 
         bf16=True,
         output_dir=f"./checkpoints/grpo_nl_to_owl_dl_output_{short_name}",
@@ -312,8 +372,8 @@ for model_name in experiment_models:
         train_dataset=grpo_dataset,
         reward_funcs=[
             owl_dl_syntax_reward,
-            owl_dl_ontology_conformance_reward,
-            owl_dl_constructor_similarity_reward,
+            owl_dl_exact_match_reward,
+            owl_dl_target_component_reward,
             owl_dl_format_reward,
         ],
         callbacks=[metrics_callback],
